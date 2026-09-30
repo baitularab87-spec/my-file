@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HumanWrite AI</title>
+  <meta name="description" content="Turn generic, robotic text into clear, natural writing — without changing your facts or your meaning.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f6b5c'/%3E%3Cpath d='M9 22V10m0 6h8m0-6v12m4-12 1.6 12L25 14' stroke='white' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#rewrite" data-nav="rewrite" aria-label="HumanWrite AI home">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8"/><path d="M9 22V10m0 6h8m0-6v12m4-12 1.6 12L25 14"/></svg>
+        <span class="brand-name">HumanWrite <span>AI</span></span>
+      </a>
+      <nav class="tabs" role="tablist">
+        <button class="tab" role="tab" data-nav="rewrite">Rewrite</button>
+        <button class="tab" role="tab" data-nav="profiles">Writing profiles</button>
+        <button class="tab" role="tab" data-nav="history">History</button>
+        <button class="tab" role="tab" data-nav="settings">Settings</button>
+      </nav>
+      <div class="topbar-right">
+        <button class="key-pill" id="keyPill" data-nav="settings" title="API key status"><span class="dot"></span><span class="txt">No API key</span></button>
+        <button class="icon-btn" id="themeToggle" title="Toggle light/dark theme" aria-label="Toggle theme">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============ REWRITE ============ -->
+    <section class="view" id="view-rewrite">
+      <div class="hero">
+        <h1>Make your writing sound like <em>you</em> wrote it.</h1>
+        <p>HumanWrite finds generic phrasing, flat rhythm and unsupported claims, then helps you rewrite them into clear, natural prose. Your facts, figures, citations and conclusions stay exactly as they are.</p>
+      </div>
+
+      <div class="workspace">
+        <div class="col-main">
+          <!-- Step 1: input -->
+          <article class="card" id="inputCard">
+            <div class="card-head">
+              <div class="step"><span>1</span> Your text</div>
+              <div class="head-actions">
+                <button class="btn ghost sm" id="loadSample">Load example</button>
+                <label class="btn ghost sm file-btn">Open .txt<input type="file" id="inputFile" accept=".txt,.md,text/plain" hidden></label>
+                <button class="btn ghost sm" id="clearInput">Clear</button>
+              </div>
+            </div>
+            <textarea id="inputText" class="doc-input" placeholder="Paste an essay, report, email or assignment here…" spellcheck="true"></textarea>
+            <div class="card-foot">
+              <div class="counts" id="inputCounts">0 words · 0 sentences</div>
+              <button class="btn primary" id="analyzeBtn">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                Analyze writing
+              </button>
+            </div>
+          </article>
+
+          <!-- Step 2: analysis -->
+          <article class="card" id="analysisCard" hidden>
+            <div class="card-head">
+              <div class="step"><span>2</span> Writing analysis</div>
+              <div class="seg sm" id="analysisView">
+                <button class="on" data-v="issues">Issues</button>
+                <button data-v="text">Highlighted text</button>
+              </div>
+            </div>
+            <div class="analysis-top">
+              <div class="score" id="scoreRing">
+                <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="track" cx="60" cy="60" r="52"/><circle class="bar" cx="60" cy="60" r="52"/></svg>
+                <div class="score-num"><b id="scoreNum">–</b><small>/100</small></div>
+              </div>
+              <div class="score-meta">
+                <div class="score-label" id="scoreLabel">–</div>
+                <p class="score-sub" id="scoreSub"></p>
+                <p class="disclaimer">This checks writing quality: rhythm, clarity, repetition and support for claims. It is not an AI detector and doesn't predict what any detector will say.</p>
+              </div>
+            </div>
+            <div class="stat-grid" id="statGrid"></div>
+            <div id="issuesPane" class="issues"></div>
+            <div id="textPane" class="hl-pane" hidden>
+              <div class="legend" id="hlLegend">
+                <span><i class="sw sw-generic"></i>Generic phrase</span>
+                <span><i class="sw sw-formal"></i>Formal word</span>
+                <span><i class="sw sw-transition"></i>Transition</span>
+                <span><i class="sw sw-passive"></i>Passive voice</span>
+                <span><i class="sw sw-repeat"></i>Repeated phrase</span>
+                <span><i class="sw sw-claim"></i>Unsupported claim</span>
+              </div>
+              <div class="doc" id="hlText"></div>
+            </div>
+          </article>
+
+          <!-- Step 3: results -->
+          <article class="card" id="resultsCard" hidden>
+            <div class="card-head wrap">
+              <div class="step"><span>3</span> Before / after</div>
+              <div class="head-actions">
+                <div class="seg sm" id="diffView">
+                  <button class="on" data-v="types">Change types</button>
+                  <button data-v="words">Word diff</button>
+                  <button data-v="clean">Clean</button>
+                </div>
+              </div>
+            </div>
+            <div class="legend" id="typeLegend"></div>
+            <div class="compare">
+              <div class="pane">
+                <div class="pane-head"><span>Original</span><span class="muted" id="origMeta"></span></div>
+                <div class="doc" id="origDoc"></div>
+              </div>
+              <div class="pane pane-new">
+                <div class="pane-head">
+                  <span>Humanized</span>
+                  <span class="pane-actions">
+                    <span class="muted" id="newMeta"></span>
+                    <button class="btn ghost xs" id="copyBtn">Copy</button>
+                    <span class="menu">
+                      <button class="btn ghost xs" id="exportBtn" aria-haspopup="true" aria-expanded="false">Export ▾</button>
+                      <span class="menu-list" id="exportMenu" hidden>
+                        <button data-export="txt">Plain text (.txt)</button>
+                        <button data-export="doc">Word document (.doc)</button>
+                        <button data-export="report">Full report (.html)</button>
+                      </span>
+                    </span>
+                  </span>
+                </div>
+                <div class="doc" id="newDoc"></div>
+              </div>
+            </div>
+            <div class="result-actions">
+              <button class="btn ghost sm" id="anotherVersion">Try another version</button>
+              <button class="btn ghost sm" id="editResult">Edit result</button>
+              <button class="btn ghost sm" id="useAsInput">Use result as new input</button>
+              <button class="btn ghost sm" id="disclosureBtn" title="Copy a short statement describing how you used AI assistance">Copy AI-use statement</button>
+              <span class="muted small" id="usageMeta"></span>
+            </div>
+
+            <section class="refine" id="refineBox">
+              <h3>Refine this version</h3>
+              <p class="muted small">Ask for a specific follow-up change. Everything else stays as it is, and the facts are still checked against your original.</p>
+              <div class="chips refine-chips" id="refineChips">
+                <button class="chip-btn">Make it simpler</button>
+                <button class="chip-btn">Make it a little more formal</button>
+                <button class="chip-btn">Make it shorter</button>
+                <button class="chip-btn">Explain the reasoning more clearly</button>
+                <button class="chip-btn">Make it sound more like my writing profile</button>
+                <button class="chip-btn">Improve the flow between paragraphs</button>
+                <button class="chip-btn">Keep more of my original wording</button>
+              </div>
+              <div class="refine-row">
+                <input type="text" id="refineInput" maxlength="400" placeholder="e.g. Make the second paragraph less formal and add a practical example from a care setting">
+                <button class="btn primary" id="refineBtn">Refine</button>
+              </div>
+            </section>
+
+            <div class="insights">
+              <section class="insight" id="whyBox">
+                <h3>Why this sounds better</h3>
+                <ul id="whyList"></ul>
+              </section>
+              <section class="insight" id="metricsBox">
+                <h3>Before → after</h3>
+                <table class="delta" id="deltaTable"></table>
+              </section>
+            </div>
+
+            <section class="insight warn" id="claimsBox" hidden>
+              <h3>Claims that need support</h3>
+              <p class="muted small">These were kept, not invented around. Consider adding a source, figure or example.</p>
+              <ul id="claimsList" class="claims"></ul>
+            </section>
+
+            <section class="insight" id="preserveBox">
+              <h3>Meaning check</h3>
+              <div id="preserveBody"></div>
+            </section>
+
+            <section class="insight" id="changesBox">
+              <h3>Change log <span class="muted" id="changeCount"></span></h3>
+              <ol id="changeList" class="changes"></ol>
+            </section>
+          </article>
+        </div>
+
+        <!-- Controls -->
+        <aside class="col-side">
+          <div class="card controls" id="controls">
+            <div class="ctl-group">
+              <div class="ctl-label">Editing mode</div>
+              <div class="modes" id="modeGrid">
+                <button data-mode="natural" class="on"><b>Natural</b><small>Balanced everyday writing</small></button>
+                <button data-mode="student"><b>Student</b><small>Simple academic English</small></button>
+                <button data-mode="professional"><b>Professional</b><small>Clear workplace writing</small></button>
+                <button data-mode="conversational"><b>Conversational</b><small>Natural and relaxed</small></button>
+                <button data-mode="academic"><b>Academic</b><small>Formal but readable</small></button>
+                <button data-mode="personal"><b>Personal Voice</b><small>Sounds like your samples</small></button>
+              </div>
+            </div>
+
+            <div class="ctl-group" id="levelGroup" hidden>
+              <label class="ctl-label" for="levelSelect">Academic level</label>
+              <select id="levelSelect">
+                <option value="gcse">GCSE / O-Level</option>
+                <option value="alevel">A-Level</option>
+                <option value="uk_l3" selected>UK Level 3</option>
+                <option value="undergrad">Undergraduate</option>
+                <option value="professional">Professional</option>
+              </select>
+              <p class="hint" id="levelHint"></p>
+            </div>
+
+            <div class="ctl-group" id="profileGroup">
+              <label class="ctl-label" for="profileSelect">Writing profile</label>
+              <select id="profileSelect"></select>
+              <p class="hint" id="profileHint"></p>
+            </div>
+
+            <div class="ctl-group">
+              <div class="ctl-label">How much to change</div>
+              <div class="seg full" id="intensity">
+                <button data-v="keep">Keep my wording</button>
+                <button data-v="light">Lightly</button>
+                <button data-v="balanced" class="on">Balanced</button>
+                <button data-v="more">Rewrite more</button>
+              </div>
+            </div>
+
+            <div class="ctl-group sliders" id="sliders">
+              <div class="ctl-label">Fine-tune</div>
+            </div>
+
+            <div class="ctl-group">
+              <label class="ctl-label" for="spelling">Spelling</label>
+              <select id="spelling">
+                <option value="keep">Match original</option>
+                <option value="uk">British English</option>
+                <option value="us">American English</option>
+              </select>
+            </div>
+
+            <label class="check">
+              <input type="checkbox" id="explainChanges" checked>
+              <span><b>Explain changes</b><small>Full change log with a reason for each edit</small></span>
+            </label>
+
+            <button class="btn primary big" id="rewriteBtn">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="m14 6 4 4"/></svg>
+              Humanize text
+            </button>
+            <div class="progress" id="progress" hidden>
+              <div class="progress-bar"><span></span></div>
+              <div class="progress-row"><span id="progressText">Starting…</span><button class="btn ghost xs" id="cancelBtn">Cancel</button></div>
+            </div>
+            <p class="hint center" id="rewriteHint"></p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ============ PROFILES ============ -->
+    <section class="view" id="view-profiles" hidden>
+      <div class="hero small">
+        <h1>Your writing profile</h1>
+        <p>Add a few pieces of your own writing, like essays, emails or reports you wrote yourself. HumanWrite measures how you write so that <b>Personal Voice</b> rewrites sound like you, not like a generic "human" style.</p>
+      </div>
+      <div class="profiles-layout">
+        <aside class="card profile-list">
+          <div class="card-head"><div class="step plain">Profiles</div><button class="btn ghost sm" id="newProfile">+ New</button></div>
+          <ul id="profileList"></ul>
+          <p class="hint" id="profileListEmpty">No profiles yet. Create one to use Personal Voice.</p>
+        </aside>
+        <div class="card profile-editor" id="profileEditor">
+          <div class="field">
+            <label for="profileName">Profile name</label>
+            <input id="profileName" type="text" placeholder="e.g. My coursework style" maxlength="60">
+          </div>
+          <div class="samples-head">
+            <div>
+              <div class="ctl-label">Writing samples</div>
+              <p class="hint">Use writing that is genuinely yours. 300+ words in total gives a reliable profile; 800+ is better.</p>
+            </div>
+            <div class="head-actions">
+              <label class="btn ghost sm file-btn">Upload .txt<input type="file" id="sampleFiles" accept=".txt,.md,text/plain" multiple hidden></label>
+              <button class="btn ghost sm" id="addSample">+ Add sample</button>
+            </div>
+          </div>
+          <div id="samples"></div>
+          <div class="card-foot">
+            <div class="counts" id="sampleCounts">0 words</div>
+            <div class="head-actions">
+              <button class="btn danger-ghost sm" id="deleteProfile" hidden>Delete</button>
+              <button class="btn primary" id="saveProfile">Analyze &amp; save profile</button>
+            </div>
+          </div>
+          <div id="profileResult" hidden></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ HISTORY ============ -->
+    <section class="view" id="view-history" hidden>
+      <div class="hero small">
+        <h1>History</h1>
+        <p>Your last 25 rewrites are saved in this browser only. Open one to see the before/after view again, or export it.</p>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div class="step plain" id="historyCount">No saved rewrites</div>
+          <div class="head-actions">
+            <label class="check inline"><input type="checkbox" id="historyEnabled" checked><span><b>Save new rewrites</b></span></label>
+            <button class="btn danger-ghost sm" id="clearHistory">Clear history</button>
+          </div>
+        </div>
+        <ul class="history" id="historyList"></ul>
+        <p class="hint" id="historyEmpty">Rewrites you make will appear here.</p>
+      </div>
+    </section>
+
+    <!-- ============ SETTINGS ============ -->
+    <section class="view" id="view-settings" hidden>
+      <div class="hero small">
+        <h1>Settings</h1>
+        <p>HumanWrite runs in your browser. Text analysis happens on this device; rewrites are sent straight from your browser to the Anthropic API using your own key.</p>
+      </div>
+      <div class="settings-grid">
+        <div class="card">
+          <div class="field">
+            <label for="apiKey">Anthropic API key</label>
+            <div class="key-row">
+              <input id="apiKey" type="password" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
+              <button class="btn ghost sm" id="toggleKey">Show</button>
+            </div>
+            <p class="hint">Create one at console.anthropic.com. It is sent only to api.anthropic.com.</p>
+          </div>
+          <label class="check">
+            <input type="checkbox" id="rememberKey">
+            <span><b>Remember key on this device</b><small>Stored in this browser's local storage. Leave off on shared computers.</small></span>
+          </label>
+          <div class="field">
+            <label for="modelSelect">Model</label>
+            <select id="modelSelect">
+              <option value="claude-opus-5">Claude Opus 5 (best quality)</option>
+              <option value="claude-sonnet-5">Claude Sonnet 5 (faster, lower cost)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="effortSelect">Editing effort</label>
+            <select id="effortSelect">
+              <option value="low">Low (quickest)</option>
+              <option value="medium">Medium</option>
+              <option value="high" selected>High (most careful)</option>
+            </select>
+          </div>
+          <div class="card-foot">
+            <span class="muted small" id="settingsSaved"></span>
+            <button class="btn primary" id="saveSettings">Save settings</button>
+          </div>
+        </div>
+        <div class="card about">
+          <h3>What HumanWrite does, and doesn't do</h3>
+          <ul class="ticks">
+            <li>Rewrites for clarity, rhythm and natural flow, the way a good human editor would.</li>
+            <li>Keeps facts, statistics, names, dates, citations and your conclusion unchanged, and checks this after every rewrite.</li>
+            <li>Flags unsupported claims instead of inventing evidence.</li>
+            <li>Learns from your own writing samples when you ask it to.</li>
+          </ul>
+          <ul class="crosses">
+            <li>Doesn't insert deliberate mistakes or swap words for random synonyms.</li>
+            <li>Doesn't claim to bypass Turnitin or any AI detector. That isn't its purpose.</li>
+          </ul>
+          <p class="hint">If you're a student, follow your school's rules on AI-assisted writing. Use HumanWrite to improve work you understand and can stand behind.</p>
+          <hr>
+          <button class="btn danger-ghost sm" id="clearData">Clear all saved data</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">HumanWrite AI · Better writing, not detector games. Your text is analysed locally and only sent to Anthropic when you choose to rewrite.</footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="js/text.js"></script>
+  <script src="js/analyzer.js"></script>
+  <script src="js/diff.js"></script>
+  <script src="js/profile.js"></script>
+  <script src="js/claude.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
